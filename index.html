@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soletrando Digital</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Tela Inicial -->
+  <div id="menu-screen" class="screen active">
+    <div class="logo">
+      <h1>🎯 Soletrando Digital</h1>
+      <p>Monte as palavras corretamente!</p>
+    </div>
+    <div class="menu-buttons">
+      <button onclick="iniciarJogo('single')" class="btn-primary">🎮 Jogar Solo</button>
+      <button onclick="iniciarJogo('multi')" class="btn-secondary">👥 Multiplayer</button>
+      <button onclick="mostrarRanking()" class="btn-tertiary">🏆 Ranking</button>
+    </div>
+  </div>
+
+  <!-- Tela de Jogo -->
+  <div id="game-screen" class="screen">
+    <div class="game-header">
+      <div class="hud">
+        <div id="score">Pontos: 0</div>
+        <div id="lives">❤️ 3</div>
+        <div id="timer">⏱️ 30s</div>
+        <div id="level">Nível: 1</div>
+      </div>
+      <div id="player-info" class="player-info"></div>
+    </div>
+
+    <div class="word-info">
+      <div id="category" class="category"></div>
+      <div id="difficulty" class="difficulty"></div>
+    </div>
+
+    <div id="drag-container" class="drag-container"></div>
+    <div id="drop-container" class="drop-container"></div>
+
+    <div class="game-controls">
+      <button id="hint-btn" onclick="mostrarDica()" class="btn-hint">💡 Dica</button>
+      <button onclick="embaralharLetras()" class="btn-shuffle">🔄 Embaralhar</button>
+      <button onclick="verificarPalavra()" class="btn-check">✅ Verificar</button>
+      <button id="keyboard-toggle" onclick="toggleKeyboard()" class="btn-keyboard">⌨️ Teclado</button>
+    </div>
+
+    <!-- Teclado Virtual -->
+    <div id="virtual-keyboard" class="virtual-keyboard hidden">
+      <div id="keyboard-letters" class="keyboard-letters"></div>
+    </div>
+
+    <div id="hint" class="hint hidden"></div>
+    <div id="message" class="message"></div>
+    
+    <!-- Efeitos visuais -->
+    <div id="confetti-container" class="confetti-container"></div>
+  </div>
+
+  <!-- Tela de Ranking -->
+  <div id="ranking-screen" class="screen">
+    <h2>🏆 Top 5 Ranking</h2>
+    <div id="ranking-list" class="ranking-list"></div>
+    <div class="ranking-controls">
+      <button onclick="resetRanking()" class="btn-danger">🗑️ Resetar Ranking</button>
+      <button onclick="voltarMenu()" class="btn-back">← Voltar</button>
+    </div>
+  </div>
+
+  <!-- Tela Final -->
+  <div id="end-screen" class="screen">
+    <div class="end-content">
+      <h2 id="end-title">Fim de Jogo!</h2>
+      <div id="final-stats" class="final-stats"></div>
+      <div class="end-buttons">
+        <button onclick="reiniciarJogo()" class="btn-primary">🔄 Jogar Novamente</button>
+        <button onclick="voltarMenu()" class="btn-secondary">🏠 Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Áudios -->
+  <audio id="sound-correct" preload="auto">
+    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNcAUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+D" type="audio/wav">
+  </audio>
+  <audio id="sound-wrong" preload="auto">
+    <source src="data:audio/wav;base64,UklGRvIBAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQoAAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEfCEGW3/LNcAULIHO8t4hV" type="audio/wav">
+  </audio>
+
+  <footer class="footer">
+    © 2025 • Desenvolvido por <strong>Manoel</strong>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
