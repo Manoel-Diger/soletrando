@@ -161,44 +161,164 @@ function renderLetters() {
 }
 
 // Sistema drag and drop
+// Sistema drag and drop - VERSÃO HÍBRIDA (funciona em desktop e mobile)
 function setupDragAndDrop() {
   let draggedElement = null;
+  let isTouchDevice = 'ontouchstart' in window;
   
-  document.querySelectorAll('.letter-box').forEach(box => {
-    box.addEventListener('dragstart', e => {
-      draggedElement = e.target;
-      e.target.style.opacity = '0.5';
-      trackUserActivity();
-    });
-    
-    box.addEventListener('dragend', e => {
-      e.target.style.opacity = '1';
-    });
-  });
-  
-  document.querySelectorAll('.drop-zone').forEach(zone => {
-    zone.addEventListener('dragover', e => {
-      e.preventDefault();
-      zone.classList.add('drag-over');
-    });
-    
-    zone.addEventListener('dragleave', () => {
-      zone.classList.remove('drag-over');
-    });
-    
-    zone.addEventListener('drop', e => {
-      e.preventDefault();
-      zone.classList.remove('drag-over');
+  // Eventos para desktop
+  if (!isTouchDevice) {
+    document.querySelectorAll('.letter-box').forEach(box => {
+      box.addEventListener('dragstart', e => {
+        draggedElement = e.target;
+        e.target.style.opacity = '0.5';
+        trackUserActivity();
+      });
       
-      if (draggedElement && !zone.hasChildNodes()) {
-        zone.appendChild(draggedElement);
-        zone.classList.add('filled');
-        draggedElement = null;
+      box.addEventListener('dragend', e => {
+        e.target.style.opacity = '1';
+      });
+    });
+
+    document.querySelectorAll('.drop-zone').forEach(zone => {
+      zone.addEventListener('dragover', e => {
+        e.preventDefault();
+        zone.classList.add('drag-over');
+      });
+      
+      zone.addEventListener('dragleave', () => {
+        zone.classList.remove('drag-over');
+      });
+      
+      zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        
+        if (draggedElement && !zone.hasChildNodes()) {
+          zone.appendChild(draggedElement);
+          zone.classList.add('filled');
+          draggedElement = null;
+          trackUserActivity();
+        }
+      });
+    });
+
+    $('drag-container').addEventListener('dragover', e => e.preventDefault());
+    $('drag-container').addEventListener('drop', e => {
+      e.preventDefault();
+      if (draggedElement && draggedElement.parentNode.classList.contains('drop-zone')) {
+        draggedElement.parentNode.classList.remove('filled');
+        $('drag-container').appendChild(draggedElement);
         trackUserActivity();
       }
     });
-  });
-  
+  } 
+  // Eventos para mobile
+  else {
+    let touchStartX, touchStartY;
+    let activeTouch = null;
+
+    document.querySelectorAll('.letter-box').forEach(box => {
+      box.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        activeTouch = touch.identifier;
+        draggedElement = this;
+        
+        // Feedback visual
+        this.style.transform = 'scale(1.1)';
+        this.style.transition = 'transform 0.1s';
+        this.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+        this.style.zIndex = '1000';
+        
+        trackUserActivity();
+      }, { passive: false });
+
+      box.addEventListener('touchmove', function(e) {
+        if (!draggedElement) return;
+        e.preventDefault();
+        
+        // Encontra o toque correto
+        const touch = Array.from(e.changedTouches).find(t => t.identifier === activeTouch);
+        if (!touch) return;
+        
+        // Move o elemento
+        const x = touch.clientX - this.offsetWidth / 2;
+        const y = touch.clientY - this.offsetHeight / 2;
+        
+        this.style.position = 'fixed';
+        this.style.left = x + 'px';
+        this.style.top = y + 'px';
+      }, { passive: false });
+
+      box.addEventListener('touchend', function(e) {
+        if (!draggedElement) return;
+        e.preventDefault();
+        
+        // Verifica se foi um toque simples (não arrastou)
+        const touch = e.changedTouches[0];
+        const deltaX = Math.abs(touch.clientX - touchStartX);
+        const deltaY = Math.abs(touch.clientY - touchStartY);
+        
+        if (deltaX < 10 && deltaY < 10) {
+          resetBoxStyle(this);
+          draggedElement = null;
+          return;
+        }
+        
+        // Encontra a zona de drop mais próxima
+        const dropZones = document.querySelectorAll('.drop-zone');
+        let closestZone = null;
+        let minDistance = Infinity;
+        
+        const boxRect = this.getBoundingClientRect();
+        const boxCenterX = boxRect.left + boxRect.width / 2;
+        const boxCenterY = boxRect.top + boxRect.height / 2;
+        
+        dropZones.forEach(zone => {
+          const zoneRect = zone.getBoundingClientRect();
+          const zoneCenterX = zoneRect.left + zoneRect.width / 2;
+          const zoneCenterY = zoneRect.top + zoneRect.height / 2;
+          
+          const distance = Math.sqrt(
+            Math.pow(boxCenterX - zoneCenterX, 2) + 
+            Math.pow(boxCenterY - zoneCenterY, 2)
+          );
+          
+          if (distance < minDistance && !zone.hasChildNodes()) {
+            minDistance = distance;
+            closestZone = zone;
+          }
+        });
+        
+        // Se encontrou uma zona próxima, move o elemento
+        if (closestZone && minDistance < 100) {
+          closestZone.appendChild(draggedElement);
+          closestZone.classList.add('filled');
+        } else {
+          // Volta para a área de arrasto
+          $('drag-container').appendChild(draggedElement);
+        }
+        
+        resetBoxStyle(this);
+        draggedElement = null;
+        trackUserActivity();
+      }, { passive: false });
+    });
+
+    function resetBoxStyle(box) {
+      box.style.transform = '';
+      box.style.transition = '';
+      box.style.boxShadow = '';
+      box.style.position = '';
+      box.style.left = '';
+      box.style.top = '';
+      box.style.zIndex = '';
+    }
+  }
+}
   // Permitir arrastar de volta
   $('drag-container').addEventListener('dragover', e => e.preventDefault());
   $('drag-container').addEventListener('drop', e => {
@@ -209,7 +329,6 @@ function setupDragAndDrop() {
       trackUserActivity();
     }
   });
-}
 
 // Verificação da palavra
 function verificarPalavra() {
